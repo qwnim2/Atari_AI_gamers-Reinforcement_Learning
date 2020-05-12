@@ -5,19 +5,20 @@ import torch.nn.functional as F
 
 from agent_dir.agent import Agent
 from environment import Environment
+from torch.distributions import Categorical
 
 class PolicyNet(nn.Module):
     def __init__(self, state_dim, action_num, hidden_dim):
         super(PolicyNet, self).__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, action_num)
-
+        
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         action_prob = F.softmax(x, dim=1)
         return action_prob
-
+    
 class AgentPG(Agent):
     def __init__(self, env, args):
         self.env = env
@@ -31,7 +32,7 @@ class AgentPG(Agent):
         self.gamma = 0.99
 
         # training hyperparameters
-        self.num_episodes = 100000 # total training episodes (actually too large...)
+        self.num_episodes = 100000 # total training episodes (actually too large...) 100000 太大
         self.display_freq = 10 # frequency to display training progress
 
         # optimizer
@@ -39,7 +40,9 @@ class AgentPG(Agent):
 
         # saved rewards and actions
         self.rewards, self.saved_actions = [], []
-
+        ###
+        self.logprobs = []
+        self.state_values = []
 
     def save(self, save_path):
         print('save model to', save_path)
@@ -53,19 +56,43 @@ class AgentPG(Agent):
         self.rewards, self.saved_actions = [], []
 
     def make_action(self, state, test=False):
-        action = self.env.action_space.sample() # TODO: Replace this line!
-        # Use your model to output distribution over actions and sample from it.
-        # HINT: torch.distributions.Categorical
-        return action
+        
+        # action = self.env.action_space.sample() # TODO: Replace this line!
+        # # Use your model to output distribution over actions and sample from it.
+        # # HINT: torch.distributions.Categorical
+        #action = Categorical(self.model.forward(state)).sample()
+        action_distribution = Categorical(self.model.forward(state))
+        action = action_distribution.sample()
+        
+        self.logprobs.append(action_distribution.log_prob(action))
+        state = F.relu(self.affine(state))
+        state_value = self.value_layer(state)
+        self.state_values.append(state_value)
+        return action.item()
 
     def update(self):
         # TODO:
         # discount reward
         # R_i = r_i + GAMMA * R_{i+1}
-
+        
         # TODO:
         # compute PG loss
         # loss = sum(-R_i * log(action_prob))
+        rewards_list = []
+        dis_reward = 0
+        for reward in self.rewards[::-1]:
+            dis_reward = reward + self.gamma * dis_reward
+            rewards_list.insert(0, dis_reward)
+        # normalizing the rewards:
+        rewards_list = torch.tensor(rewards_list)
+        rewards_list = (rewards_list - rewards_list.mean()) / (rewards_list.std())
+        
+        loss = 0
+        for logprob, value, reward in zip(self.logprobs, self.state_values, rewards_list):
+            advantage = reward  - value.item()
+            action_loss = -logprob * advantage
+            value_loss = F.smooth_l1_loss(value, reward)
+            loss += (action_loss + value_loss)
 
         self.optimizer.zero_grad()
         loss.backward()
