@@ -16,7 +16,7 @@ class PolicyNet(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        action_prob = F.softmax(x, dim=1)
+        action_prob = F.softmax(x, dim=0)##
         return action_prob
     
 class AgentPG(Agent):
@@ -42,7 +42,7 @@ class AgentPG(Agent):
         self.rewards, self.saved_actions = [], []
         ###
         self.logprobs = []
-        self.state_values = []
+        #self.state_values = []
 
     def save(self, save_path):
         print('save model to', save_path)
@@ -53,7 +53,7 @@ class AgentPG(Agent):
         self.model.load_state_dict(torch.load(load_path))
 
     def init_game_setting(self):
-        self.rewards, self.saved_actions = [], []
+        self.rewards, self.saved_actions, self.logprobs = [], [], []
 
     def make_action(self, state, test=False):
         
@@ -61,13 +61,13 @@ class AgentPG(Agent):
         # # Use your model to output distribution over actions and sample from it.
         # # HINT: torch.distributions.Categorical
         #action = Categorical(self.model.forward(state)).sample()
-        action_distribution = Categorical(self.model.forward(state))
+        
+        state = torch.from_numpy(state).float()
+        action_distribution = Categorical(self.model(state))
         action = action_distribution.sample()
         
         self.logprobs.append(action_distribution.log_prob(action))
-        state = F.relu(self.affine(state))
-        state_value = self.value_layer(state)
-        self.state_values.append(state_value)
+        #self.state_values.append(state_value)
         return action.item()
 
     def update(self):
@@ -88,11 +88,8 @@ class AgentPG(Agent):
         rewards_list = (rewards_list - rewards_list.mean()) / (rewards_list.std())
         
         loss = 0
-        for logprob, value, reward in zip(self.logprobs, self.state_values, rewards_list):
-            advantage = reward  - value.item()
-            action_loss = -logprob * advantage
-            value_loss = F.smooth_l1_loss(value, reward)
-            loss += (action_loss + value_loss)
+        for logprob, reward in zip(self.logprobs, rewards_list):
+            loss += (-reward * logprob)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -122,6 +119,6 @@ class AgentPG(Agent):
                 print('Epochs: %d/%d | Avg reward: %f '%
                        (epoch, self.num_episodes, avg_reward))
 
-            if avg_reward > 50: # to pass baseline, avg. reward > 50 is enough.
+            if avg_reward > 100: # to pass baseline, avg. reward > 50 is enough.
                 self.save('pg.cpt')
                 break
