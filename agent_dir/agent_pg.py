@@ -119,6 +119,6 @@ class AgentPG(Agent):
                 print('Epochs: %d/%d | Avg reward: %f '%
                        (epoch, self.num_episodes, avg_reward))
 
-            if avg_reward > 100: # to pass baseline, avg. reward > 50 is enough.
+            if avg_reward > 60: # to pass baseline, avg. reward > 50 is enough.
                 self.save('pg.cpt')
                 break
