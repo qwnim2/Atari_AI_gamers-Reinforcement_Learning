@@ -96,10 +96,11 @@ class AgentDQN(Agent):
         # Implement epsilon-greedy to decide whether you want to randomly select
         # an action or not.
         # HINT: You may need to use and self.steps
-
-        action = self.env.action_space.sample()
-
-        return action
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)
+        state_tensor = torch.from_numpy(state).float()
+        act_values = self.model(state_tensor).cpu().detach().numpy()
+        return np.argmax(act_values[0])
 
     def update(self):
         # TODO:

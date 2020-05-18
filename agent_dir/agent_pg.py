@@ -67,22 +67,20 @@ class AgentPG(Agent):
         action = action_distribution.sample()
         
         self.logprobs.append(action_distribution.log_prob(action))
-        #self.state_values.append(state_value)
         return action.item()
 
     def update(self):
         # TODO:
         # discount reward
         # R_i = r_i + GAMMA * R_{i+1}
-        
-        # TODO:
-        # compute PG loss
-        # loss = sum(-R_i * log(action_prob))
         rewards_list = []
         dis_reward = 0
         for reward in self.rewards[::-1]:
             dis_reward = reward + self.gamma * dis_reward
             rewards_list.insert(0, dis_reward)
+        # TODO:
+        # compute PG loss
+        # loss = sum(-R_i * log(action_prob))
         # normalizing the rewards:
         rewards_list = torch.tensor(rewards_list)
         rewards_list = (rewards_list - rewards_list.mean()) / (rewards_list.std())
