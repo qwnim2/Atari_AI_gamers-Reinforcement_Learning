@@ -110,8 +110,8 @@ class AgentDQN(Agent):
                 # t.max(1) will return largest column value of each row.
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
-                online_net(state).max(1)[1].view(1, 1)
-                return online_net(state).max(1)[1].view(1, 1)
+                print(self.online_net(state).max(1)[1].view(1, 1))
+                return self.online_net(state).max(1)[1].view(1, 1)
         else:
             return torch.tensor([[random.randrange(self.num_actions)]], device= torch.device("cuda:0" if use_cuda else "cpu")
                                 , dtype=torch.long)
