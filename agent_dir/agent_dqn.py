@@ -151,7 +151,6 @@ class AgentDQN(Agent):
                 next_state = torch.from_numpy(next_state).permute(2,0,1).unsqueeze(0)
 
                 # TODO: store the transition in memory
-                self.replay.append(state, action, next_state, reward)
                 if len(self.replay) < self.buffer_size:
                     self.replay.append(None)
                 self.replay[self.position] = (state, action, next_state, reward)
