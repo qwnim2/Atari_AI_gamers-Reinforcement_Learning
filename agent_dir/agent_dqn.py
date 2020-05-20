@@ -48,7 +48,7 @@ class AgentDQN(Agent):
         self.target_net = self.target_net.cuda() if use_cuda else self.target_net
         self.online_net = DQN(self.input_channels, self.num_actions)
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
-
+ 
         if args.test_dqn:
             self.load('dqn')
 
@@ -71,7 +71,13 @@ class AgentDQN(Agent):
         self.steps = 0 # num. of passed steps
 
         # TODO: initialize your replay buffer
-
+        self.replay = []
+        self.position = 0
+        
+        self.eps = 0.9  # exploration rate
+        self.eps_min = 0.05
+        self.eps_decay = 200
+        ###
 
     def save(self, save_path):
         print('save model to', save_path)
@@ -96,11 +102,19 @@ class AgentDQN(Agent):
         # Implement epsilon-greedy to decide whether you want to randomly select
         # an action or not.
         # HINT: You may need to use and self.steps
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
-        state_tensor = torch.from_numpy(state).float()
-        act_values = self.model(state_tensor).cpu().detach().numpy()
-        return np.argmax(act_values[0])
+        sample = random.random()
+        eps_threshold = self.eps_min + (self.eps - self.eps_min) \
+            * math.exp(-1. * self.steps / self.eps_decay)
+        if sample > eps_threshold:
+            with torch.no_grad():
+                # t.max(1) will return largest column value of each row.
+                # second column on max result is index of where max element was
+                # found, so we pick action with the larger expected reward.
+                online_net(state).max(1)[1].view(1, 1)
+                return online_net(state).max(1)[1].view(1, 1)
+        else:
+            return torch.tensor([[random.randrange(self.num_actions)]], device= torch.device(cuda if use_cuda else cpu)
+                                , dtype=torch.long)
 
     def update(self):
         # TODO:
@@ -136,7 +150,12 @@ class AgentDQN(Agent):
                 next_state = torch.from_numpy(next_state).permute(2,0,1).unsqueeze(0)
 
                 # TODO: store the transition in memory
-
+                self.replay.append(state, action, next_state, reward)
+                if len(self.replay) < self.buffer_size:
+                    self.replay.append(None)
+                self.replay[self.position] = (state, action, next_state, reward)
+                self.position = (self.position + 1) % self.buffer_size
+                
                 # move to the next state
                 state = next_state
 
