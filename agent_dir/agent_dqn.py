@@ -115,7 +115,7 @@ class AgentDQN(Agent):
                 return self.online_net(state).max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
-            return torch.tensor([[random.randrange(self.num_actions)]], device= torch.device("cuda:0" if use_cuda else "cpu")
+            return torch.tensor([[random.randrange(self.num_actions)]], device= torch.device("cuda" if use_cuda else "cpu")
                                 , dtype=torch.long)
 
     def update(self):
