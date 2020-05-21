@@ -106,13 +106,13 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                #act = self.online_net(state.to(device)).cpu().numpy()
-                #return np.argmax(act)
+                act = self.online_net(state.to(device)).cpu().numpy()
+                return np.argmax(act)
                 print("=======if======")
-                return self.online_net(state).max(1)[1].view(1, 1).cuda()
+                return self.online_net(state).max(1)[1].view(1, 1)
         else:
-            print("=======else======")
-            return random.randrange(self.num_actions)
+            #print("=======else======")
+            return random.randrange(self.num_actions)#.to(device)
             #return torch.tensor([[random.randrange(self.num_actions)]], dtype=torch.long).cuda()
             
     def update(self):
@@ -134,9 +134,9 @@ class AgentDQN(Agent):
                                           mini_batch.next_state)), device=device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
-        state_batch = torch.cat(mini_batch.state)
-        action_batch = torch.cat(torch.from_numpy(mini_batch.action))
-        reward_batch = torch.cat(mini_batch.reward)
+        state_batch = torch.cat(mini_batch.state).cuda()
+        action_batch = torch.cat(torch.from_numpy(mini_batch.action)).cuda()
+        reward_batch = torch.cat(mini_batch.reward).cuda()
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
@@ -154,7 +154,7 @@ class AgentDQN(Agent):
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
 
         # Compute Huber loss
-        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+        loss = F.mse_loss(state_action_values.cuda(), expected_state_action_values.cuda().unsqueeze(1))
 
         # Optimize the model
         self.optimizer.zero_grad()
