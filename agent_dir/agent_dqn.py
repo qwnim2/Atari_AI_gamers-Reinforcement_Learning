@@ -48,7 +48,7 @@ class AgentDQN(Agent):
         self.target_net = self.target_net.cuda() if use_cuda else self.target_net
         self.online_net = DQN(self.input_channels, self.num_actions)
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
- 
+
         if args.test_dqn:
             self.load('dqn')
 
@@ -123,8 +123,10 @@ class AgentDQN(Agent):
         # 2. You should carefully deal with gamma * max(Q(s_{t+1}, a)) when it
         #    is the terminal state.
         mini_batch = random.sample(self.replay, self.batch_size)
+        print(len(mini_batch[0]))
         print(len(mini_batch[1]))
-        print("@@")
+        print(len(mini_batch[2]))
+        print(len(mini_batch[3]))
         return loss.item()
 
     def train(self):
@@ -160,7 +162,7 @@ class AgentDQN(Agent):
 
                 # TODO: update target network
                 if self.steps > self.learning_start and self.steps % self.target_update_freq == 0:
-                    pass
+                    self.target_net.load_state_dict(self.online_net.state_dict())
 
                 # save the model
                 if self.steps % self.save_freq == 0:
