@@ -125,8 +125,8 @@ class AgentDQN(Agent):
         mini_batch = random.sample(self.replay, self.batch_size)
         print(len(mini_batch[0][0]))
         print((mini_batch[0][1]))
-        print((mini_batch[0][2]))
-        print(len(mini_batch[0][3]))
+        print(len(mini_batch[0][2]))
+        print((mini_batch[0][3]))
         return loss.item()
 
     def train(self):
