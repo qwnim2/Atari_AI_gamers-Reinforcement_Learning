@@ -59,10 +59,10 @@ class AgentDQN(Agent):
         self.train_freq = 4 # frequency to train the online network
         self.learning_start = 10000 # before we start to update our network, we wait a few steps first to fill the replay.
         self.batch_size = 32
-        self.num_timesteps = 3000000 # total training steps
+        self.num_timesteps = 500000#3000000 # total training steps
         self.display_freq = 10 # frequency to display training progress
         self.save_freq = 200000 # frequency to save the model
-        self.target_update_freq = 1000 # frequency to update target network
+        self.target_update_freq = 100#0 # frequency to update target network
         self.buffer_size = 10000 # max size of replay buffer
 
         # optimizer
@@ -122,11 +122,43 @@ class AgentDQN(Agent):
         # 1. You should not backprop to the target model in step 3 (Use torch.no_grad)
         # 2. You should carefully deal with gamma * max(Q(s_{t+1}, a)) when it
         #    is the terminal state.
-        mini_batch = random.sample(self.replay, self.batch_size)
-        print(len(mini_batch[0][0]))
-        print((mini_batch[0][1]))
-        print(len(mini_batch[0][2]))
-        print((mini_batch[0][3]))
+        Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
+        transitions = random.sample(self.replay, self.batch_size)
+        mini_batch = Transition(*zip(*transitions))
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          mini_batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in mini_batch.next_state
+                                                if s is not None])
+        state_batch = torch.cat(mini_batch.state)
+        action_batch = torch.cat(mini_batch.action)
+        reward_batch = torch.cat(mini_batch.reward)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to policy_net
+        state_action_values = self.online_net(state_batch).gather(1, action_batch)
+
+        # Compute V(s_{t+1}) for all next states.
+        # Expected values of actions for non_final_next_states are computed based
+        # on the "older" target_net; selecting their best reward with max(1)[0].
+        # This is merged based on the mask, such that we'll have either the expected
+        # state value or 0 in case the state was final.
+        next_state_values = torch.zeros(self.batch_size, device=device)
+        next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        # Compute the expected Q values
+        expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+
+        # Compute Huber loss
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        # Optimize the model
+        self.optimizer.zero_grad()
+        loss.backward()
+        for param in online_net.parameters():
+            param.grad.data.clamp_(-1, 1)
+        self.optimizer.step()
+
         return loss.item()
 
     def train(self):
