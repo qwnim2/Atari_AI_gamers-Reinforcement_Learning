@@ -112,8 +112,8 @@ class AgentDQN(Agent):
                 return self.online_net(state).max(1)[1].view(1, 1)
         else:
             #print("=======else======")
-            #return [random.randrange(self.num_actions)#.to(device)
-            return torch.tensor([[random.randrange(self.num_actions)]], dtype=torch.long)#.cuda()
+            return [random.randrange(self.num_actions)#.to(device)
+            #return torch.tensor([[random.randrange(self.num_actions)]], dtype=torch.long).cuda()
             
     def update(self):
         # TODO:
@@ -135,8 +135,12 @@ class AgentDQN(Agent):
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
         state_batch = torch.cat(mini_batch.state).cuda()
-        print(mini_batch.action)
-        action_batch = torch.cat((mini_batch.action)).cuda()
+        action_tensor = []
+        for i in mini_batch.action:
+            action_tensor.append([i])
+        action_tensor = torch.tensor(action_tensor, dtype=torch.long)
+        print(action_tensor)
+        action_batch = torch.cat((action_tensor)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
