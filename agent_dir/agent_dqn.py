@@ -143,7 +143,7 @@ class AgentDQN(Agent):
         # for each batch state according to policy_net
         print(state_batch)
         print(state_batch.shape)
-        
+        print(action_batch.shape)
         state_action_values = self.online_net(state_batch).gather(1, action_batch)
 
         # Compute V(s_{t+1}) for all next states.
