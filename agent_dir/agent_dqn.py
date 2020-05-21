@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.nn as nn
-
+from collections import namedtuple
 from agent_dir.agent import Agent
 from environment import Environment
 
