@@ -112,7 +112,7 @@ class AgentDQN(Agent):
                 return self.online_net(state).max(1)[1].view(1, 1)
         else:
             print("=======else======")
-            return random.randrange(self.action_size)
+            return random.randrange(self.num_actions)
             #return torch.tensor([[random.randrange(self.num_actions)]], dtype=torch.long).cuda()
             
     def update(self):
