@@ -41,7 +41,7 @@ class AgentDQN(Agent):
     def __init__(self, env, args):
         self.env = env
         self.input_channels = 4
-        self.num_actions = self.env.action_space.n
+        self.num_actions = self.env.action_space.n      #num_actions = 9
 
         # build target, online network
         self.target_net = DQN(self.input_channels, self.num_actions)
@@ -74,9 +74,9 @@ class AgentDQN(Agent):
         self.replay = []
         self.position = 0
         
-        self.eps = 0.9  # exploration rate
-        self.eps_min = 0.05
-        self.eps_decay = 200
+        self.eps = 1.0  # exploration rate
+        self.eps_min = 0.1
+        self.eps_decay = 0.995
         ###
 
     def save(self, save_path):
@@ -103,19 +103,16 @@ class AgentDQN(Agent):
         # an action or not.
         # HINT: You may need to use and self.steps
         sample = random.random()
-        eps_threshold = self.eps_min + (self.eps - self.eps_min) \
-            * math.exp(-1. * self.steps / self.eps_decay)
-        if sample > eps_threshold:
+        if sample > self.eps:
             with torch.no_grad():
                 # t.max(1) will return largest column value of each row.
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
                 print("============yoyooyo===========")
-                print(self.online_net(state))
-                return self.online_net(state).max(1)[1].view(1, 1)
+                print(np.argmax(self.online_net(state)))
+                return np.argmax(self.online_net(state))#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
-            print(self.num_actions)
             return random.randrange(self.num_actions)
 
     def update(self):
@@ -173,6 +170,9 @@ class AgentDQN(Agent):
                     self.save('dqn')
 
                 self.steps += 1
+                
+                if self.eps > self.eps_min:
+                    self.eps *= self.eps_decay
 
             if episodes_done_num % self.display_freq == 0:
                 print('Episode: %d | Steps: %d/%d | Avg reward: %f | loss: %f '%
