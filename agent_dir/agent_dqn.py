@@ -74,6 +74,7 @@ class AgentDQN(Agent):
         self.replay = []
         self.position = 0
         
+        ###
         self.eps = 1.0  # exploration rate
         self.eps_min = 0.1
         self.eps_decay = 0.995
@@ -104,17 +105,14 @@ class AgentDQN(Agent):
         # HINT: You may need to use and self.steps
         sample = random.random()
         if sample > self.eps:
-            with torch.no_grad():
-                # t.max(1) will return largest column value of each row.
-                # second column on max result is index of where max element was
-                # found, so we pick action with the larger expected reward.
-                print("============yoyooyo===========")
-                print(np.argmax(self.online_net(state))[0])
-                return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
+            #with torch.no_grad():
+            print("============yoyooyo===========")
+            print(np.argmax(self.online_net(state))[0])
+            return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
             return random.randrange(self.num_actions)
-
+            
     def update(self):
         # TODO:
         # step 1: Sample some stored experiences as training examples.
