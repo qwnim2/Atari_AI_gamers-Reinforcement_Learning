@@ -106,10 +106,11 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                act = self.online_net(state.to(device)).cpu().numpy()
-                return [np.argmax(act)].view(1, 1)
+                #act = self.online_net(state.to(device)).cpu().numpy()
+                #return np.argmax(act)
+                return online_net(state).max(1)[1].view(1, 1)
         else:
-            return random.randrange(self.num_actions)
+            return torch.tensor(random.randrange(self.num_actions), device=device, dtype=torch.long)
             
     def update(self):
         # TODO:
