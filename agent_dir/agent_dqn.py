@@ -107,7 +107,7 @@ class AgentDQN(Agent):
         if sample > self.eps:
             with torch.no_grad():
                 act = self.online_net(state.to(device)).cpu().numpy()
-                print(np.argmax(act[0]))
+                print(np.argmax(act))
                 return np.argmax(act[0])#.max(1)[1].view(1, 1)
         else:
             return random.randrange(self.num_actions)
