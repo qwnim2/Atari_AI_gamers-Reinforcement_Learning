@@ -123,10 +123,10 @@ class AgentDQN(Agent):
         # 2. You should carefully deal with gamma * max(Q(s_{t+1}, a)) when it
         #    is the terminal state.
         mini_batch = random.sample(self.replay, self.batch_size)
-        print(len(mini_batch[0]))
-        print(len(mini_batch[1]))
-        print(len(mini_batch[2]))
-        print(len(mini_batch[3]))
+        print(len(mini_batch[0][0]))
+        print(len(mini_batch[0][1]))
+        print(len(mini_batch[0][2]))
+        print(len(mini_batch[0][3]))
         return loss.item()
 
     def train(self):
