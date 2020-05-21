@@ -115,6 +115,7 @@ class AgentDQN(Agent):
                 return self.online_net(state).max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
+            print(self.num_actions)
             return random.randrange(self.num_actions)
 
     def update(self):
