@@ -109,7 +109,7 @@ class AgentDQN(Agent):
                 #act = self.online_net(state.to(device)).cpu().numpy()
                 #return np.argmax(act)
                 print("=======if======")
-                return self.online_net(state).max(1)[1].view(1, 1)
+                return self.online_net(state).max(1)[1].view(1, 1).cuda()
         else:
             print("=======else======")
             return random.randrange(self.num_actions)
