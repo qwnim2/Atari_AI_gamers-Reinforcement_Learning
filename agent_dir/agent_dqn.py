@@ -107,8 +107,7 @@ class AgentDQN(Agent):
         if sample > self.eps:
             with torch.no_grad():
                 act = self.online_net(state.to(device)).cpu().numpy()
-                print(np.argmax(act))
-                return np.argmax(act[0])#.max(1)[1].view(1, 1)
+                return np.argmax(act[0])
         else:
             return random.randrange(self.num_actions)
             
@@ -123,7 +122,9 @@ class AgentDQN(Agent):
         # 1. You should not backprop to the target model in step 3 (Use torch.no_grad)
         # 2. You should carefully deal with gamma * max(Q(s_{t+1}, a)) when it
         #    is the terminal state.
-
+        mini_batch = random.sample(self.replay, self.batch_size)
+        print(len(mini_batch[1]))
+        print("@@")
         return loss.item()
 
     def train(self):
