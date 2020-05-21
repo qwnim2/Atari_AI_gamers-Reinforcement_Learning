@@ -135,7 +135,7 @@ class AgentDQN(Agent):
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
         state_batch = torch.cat(mini_batch.state).cuda()
-        action_batch = torch.cat((action_tensor)).cuda()
+        action_batch = torch.cat((mini_batch.action)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
