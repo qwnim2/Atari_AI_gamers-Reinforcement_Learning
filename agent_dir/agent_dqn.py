@@ -104,7 +104,6 @@ class AgentDQN(Agent):
         # an action or not.
         # HINT: You may need to use and self.steps
         sample = random.random()
-        state = torch.from_numpy(state)
         if sample > self.eps:
             #with torch.no_grad():
             print("============yoyooyo===========")
@@ -136,7 +135,7 @@ class AgentDQN(Agent):
             state = self.env.reset()
             # State: (80,80,4) --> (1,4,80,80)
             state = torch.from_numpy(state).permute(2,0,1).unsqueeze(0)
-
+            print(state)    ##
             done = False
             while(not done):
                 # select and perform action
