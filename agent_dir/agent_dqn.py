@@ -10,7 +10,7 @@ from agent_dir.agent import Agent
 from environment import Environment
 
 use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
+device = torch.device("cuda" if use_cuda else "cpu")
 
 class DQN(nn.Module):
     '''
@@ -107,8 +107,8 @@ class AgentDQN(Agent):
         if sample > self.eps:
             #with torch.no_grad():
             print("============yoyooyo===========")
-            print(np.argmax(self.online_net(state))[0])
-            return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
+            print(np.argmax(self.online_net(state.to(device)))[0])
+            return np.argmax(self.online_net(stateto(device))[0])#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
             return random.randrange(self.num_actions)
@@ -135,7 +135,6 @@ class AgentDQN(Agent):
             state = self.env.reset()
             # State: (80,80,4) --> (1,4,80,80)
             state = torch.from_numpy(state).permute(2,0,1).unsqueeze(0)
-            print(state)    ##
             done = False
             while(not done):
                 # select and perform action
