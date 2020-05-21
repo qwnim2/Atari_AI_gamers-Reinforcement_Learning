@@ -135,11 +135,6 @@ class AgentDQN(Agent):
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
         state_batch = torch.cat(mini_batch.state).cuda()
-        action_tensor = []
-        for i in mini_batch.action:
-            action_tensor.append([i])
-        action_tensor = torch.tensor(action_tensor, dtype=torch.long)
-        print(action_tensor)
         action_batch = torch.cat((action_tensor)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
 
@@ -191,6 +186,8 @@ class AgentDQN(Agent):
                 # TODO: store the transition in memory
                 if len(self.replay) < self.buffer_size:
                     self.replay.append(None)
+                action = torch.tensor(action, dtype=torch.long)
+                print(action)
                 self.replay[self.position] = (state, action, next_state, reward)
                 self.position = (self.position + 1) % self.buffer_size
                 
