@@ -141,10 +141,10 @@ class AgentDQN(Agent):
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        print(state_batch)
-        print(state_batch.shape)
-        print(action_batch.shape)
-        state_action_values = self.online_net(state_batch).gather(1, action_batch)
+        #print(state_batch)
+        #print(state_batch.shape)
+        #print(action_batch.shape)
+        state_action_values = self.online_net(state_batch[0]).gather(1, action_batch)
 
         # Compute V(s_{t+1}) for all next states.
         # Expected values of actions for non_final_next_states are computed based
