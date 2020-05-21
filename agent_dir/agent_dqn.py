@@ -106,11 +106,10 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                print("============yoyooyo===========")
                 act = self.online_net(state.to(device)).cpu().numpy()
+                print(np.argmax(act[0]))
                 return np.argmax(act[0])#.max(1)[1].view(1, 1)
         else:
-            print("OKOKOK===========")
             return random.randrange(self.num_actions)
             
     def update(self):
