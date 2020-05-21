@@ -186,7 +186,7 @@ class AgentDQN(Agent):
                 # TODO: store the transition in memory
                 if len(self.replay) < self.buffer_size:
                     self.replay.append(None)
-                action = torch.tensor(action, dtype=torch.long)
+                action = torch.tensor([action], dtype=torch.long)
                 print(action)
                 self.replay[self.position] = (state, action, next_state, reward)
                 self.position = (self.position + 1) % self.buffer_size
