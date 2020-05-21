@@ -10,7 +10,7 @@ from agent_dir.agent import Agent
 from environment import Environment
 
 use_cuda = torch.cuda.is_available()
-
+device = torch.device("cuda:0" if use_cuda else "cpu")
 
 class DQN(nn.Module):
     '''
@@ -111,7 +111,7 @@ class AgentDQN(Agent):
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
                 print("============yoyooyo===========")
-                print(self.online_net(state).max(1)[1].view(1, 1))
+                print(self.online_net(state)
                 return self.online_net(state).max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
