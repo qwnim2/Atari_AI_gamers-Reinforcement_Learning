@@ -104,10 +104,11 @@ class AgentDQN(Agent):
         # an action or not.
         # HINT: You may need to use and self.steps
         sample = random.random()
+        state = torch.from_numpy(state)
         if sample > self.eps:
             #with torch.no_grad():
             print("============yoyooyo===========")
-            print(np.argmax(self.online_net(state))[0]).to(device)
+            print(np.argmax(self.online_net(state))[0])
             return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
