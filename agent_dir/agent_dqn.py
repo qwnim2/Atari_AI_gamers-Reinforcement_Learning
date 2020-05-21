@@ -107,7 +107,7 @@ class AgentDQN(Agent):
         if sample > self.eps:
             #with torch.no_grad():
             print("============yoyooyo===========")
-            print(np.argmax(self.online_net(state))[0])
+            print(np.argmax(self.online_net(state))[0]).to(device)
             return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
