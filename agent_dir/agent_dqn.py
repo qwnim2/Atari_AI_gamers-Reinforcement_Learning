@@ -109,8 +109,8 @@ class AgentDQN(Agent):
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
                 print("============yoyooyo===========")
-                print(np.argmax(self.online_net(state)))
-                return np.argmax(self.online_net(state))#.max(1)[1].view(1, 1)
+                print(np.argmax(self.online_net(state))[0])
+                return np.argmax(self.online_net(state)[0])#.max(1)[1].view(1, 1)
         else:
             print("OKOKOK===========")
             return random.randrange(self.num_actions)
