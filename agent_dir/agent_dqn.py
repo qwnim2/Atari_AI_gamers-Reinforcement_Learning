@@ -106,8 +106,7 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                action = self.online_net(state.cuda()).max(1)[1]#.item() #int
-                print(action)
+                action = self.online_net(state.cuda()).max(1)[1].item() #int
                 return action
                 #print("=======if======")
                 #return self.online_net(state).max(1)[1].view(1, 1)
@@ -188,7 +187,7 @@ class AgentDQN(Agent):
                 # TODO: store the transition in memory
                 if len(self.replay) < self.buffer_size:
                     self.replay.append(None)
-                action = torch.tensor([action], dtype=torch.long)
+                action = torch.tensor(action.view(1,1), dtype=torch.long)
                 reward = torch.tensor([reward], dtype = torch.long)
                 self.replay[self.position] = (state, action, next_state, reward)
                 self.position = (self.position + 1) % self.buffer_size
