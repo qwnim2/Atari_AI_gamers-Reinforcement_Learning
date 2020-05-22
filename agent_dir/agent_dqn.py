@@ -106,8 +106,8 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                action = self.online_net(state.cuda()).max(1)[1].item()
-                print(type(action))
+                action = self.online_net(state.cuda()).max(1)[1]#.item() #int
+                print(action)
                 return action
                 #print("=======if======")
                 #return self.online_net(state).max(1)[1].view(1, 1)
