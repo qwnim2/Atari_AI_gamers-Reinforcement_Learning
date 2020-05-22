@@ -106,8 +106,9 @@ class AgentDQN(Agent):
         sample = random.random()
         if sample > self.eps:
             with torch.no_grad():
-                act = self.online_net(state.to(device)).cpu().numpy()
-                return np.argmax(act)
+                action = self.online_net(state.cuda()).max(1)[1].item()
+                print(type(action))
+                return action
                 #print("=======if======")
                 #return self.online_net(state).max(1)[1].view(1, 1)
         else:
@@ -134,15 +135,7 @@ class AgentDQN(Agent):
                                           mini_batch.next_state)), device=device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
-        print(len(mini_batch.state))
-        print(len(mini_batch.state[0]))
-        print(len(mini_batch.state[0][0]))
-        print(len(mini_batch.state[0][0][0]))
 
-        print(len(mini_batch.next_state))
-        print(len(mini_batch.next_state[0]))
-        print(len(mini_batch.next_state[0][0]))
-        print(len(mini_batch.next_state[0][0][0]))
         state_batch = torch.cat(mini_batch.state).cuda()
         action_batch = torch.cat((mini_batch.action)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
@@ -150,15 +143,6 @@ class AgentDQN(Agent):
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-<<<<<<< HEAD
-        print(state_batch)
-        print(state_batch.shape)
-        print(action_batch.shape)
-=======
-        #print(state_batch)
-        #print(state_batch.shape)
-        #print(action_batch.shape)
->>>>>>> 4a8a7a0b112dbaff41d193e4399a5add4d7512b8
         state_action_values = self.online_net(state_batch).gather(1, action_batch)
 
         # Compute V(s_{t+1}) for all next states.
