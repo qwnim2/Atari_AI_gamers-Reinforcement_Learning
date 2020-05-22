@@ -59,10 +59,10 @@ class AgentDQN(Agent):
         self.train_freq = 4 # frequency to train the online network
         self.learning_start = 10000 # before we start to update our network, we wait a few steps first to fill the replay.
         self.batch_size = 32
-        self.num_timesteps = 500000#3000000 # total training steps
+        self.num_timesteps = 3000000 # total training steps
         self.display_freq = 10 # frequency to display training progress
         self.save_freq = 200000 # frequency to save the model
-        self.target_update_freq = 100#0 # frequency to update target network
+        self.target_update_freq = 1000 # frequency to update target network
         self.buffer_size = 10000 # max size of replay buffer
 
         # optimizer
@@ -108,12 +108,8 @@ class AgentDQN(Agent):
             with torch.no_grad():
                 action = self.online_net(state.cuda()).max(1)[1].item() #int
                 return action
-                #print("=======if======")
-                #return self.online_net(state).max(1)[1].view(1, 1)
         else:
-            #print("=======else======")
-            return random.randrange(self.num_actions)#.to(device)
-            #return torch.tensor([[random.randrange(self.num_actions)]], dtype=torch.long).cuda()
+            return random.randrange(self.num_actions)
             
     def update(self):
         # TODO:
@@ -134,7 +130,7 @@ class AgentDQN(Agent):
                                           mini_batch.next_state)), device=device, dtype=torch.bool)
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
-
+                                                
         state_batch = torch.cat(mini_batch.state).cuda()
         action_batch = torch.cat((mini_batch.action)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
