@@ -160,7 +160,7 @@ class AgentDQN(Agent):
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
-        for param in online_net.parameters():
+        for param in self.online_net.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
