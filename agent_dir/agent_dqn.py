@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-writer = SummaryWriter('runs/exp-1')
+writer = SummaryWriter('run/exp-1')
 
 class DQN(nn.Module):
     '''
