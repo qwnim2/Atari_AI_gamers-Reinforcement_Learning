@@ -171,7 +171,7 @@ class AgentDQN(Agent):
 
     def train(self, num):
         from tensorboardX import SummaryWriter 
-        writer = SummaryWriter(f'run/reward_{num}')
+        writer = SummaryWriter(f'run_gamma/reward_{num}')
 
         if num == 1:
             self.GAMMA = 0.999999
@@ -227,7 +227,7 @@ class AgentDQN(Agent):
             if episodes_done_num % self.display_freq == 0:
                 print('Episode: %d | Steps: %d/%d | Avg reward: %f | loss: %f '%
                         (episodes_done_num, self.steps, self.num_timesteps, total_reward / self.display_freq, loss))
-                if episodes_done_num % 10000 ==0:
+                if self.steps % 10000 ==0:
                     writer.add_scalar('avg_reward', total_reward / self.display_freq, episodes_done_num)
                 total_reward = 0
 
