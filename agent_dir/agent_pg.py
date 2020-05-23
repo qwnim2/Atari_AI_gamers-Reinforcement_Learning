@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from agent_dir.agent import Agent
 from environment import Environment
 from torch.distributions import Categorical
+from tensorboardX import SummaryWriter
+writer = SummaryWriter('run_pg/exp-1')
 
 class PolicyNet(nn.Module):
     def __init__(self, state_dim, action_num, hidden_dim):
@@ -26,7 +28,7 @@ class AgentPG(Agent):
                                action_num= self.env.action_space.n,
                                hidden_dim=64)
         if args.test_pg:
-            self.load('pg.cpt')
+            self.load('pg_plot.cpt')
 
         # discounted reward
         self.gamma = 0.99
@@ -94,6 +96,7 @@ class AgentPG(Agent):
         self.optimizer.step()
 
     def train(self):
+        global writer
         avg_reward = None
         for epoch in range(self.num_episodes):
             state = self.env.reset()
@@ -114,9 +117,10 @@ class AgentPG(Agent):
             avg_reward = last_reward if not avg_reward else avg_reward * 0.9 + last_reward * 0.1
 
             if epoch % self.display_freq == 0:
+                writer.add_scalar('Reward', avg_reward, epoch)
                 print('Epochs: %d/%d | Avg reward: %f '%
                        (epoch, self.num_episodes, avg_reward))
 
             if avg_reward > 60: # to pass baseline, avg. reward > 50 is enough.
-                self.save('pg.cpt')
+                self.save('pg_plot.cpt')
                 break
