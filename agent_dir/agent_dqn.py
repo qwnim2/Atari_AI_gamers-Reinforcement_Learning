@@ -8,9 +8,11 @@ import torch.nn as nn
 from collections import namedtuple
 from agent_dir.agent import Agent
 from environment import Environment
+from tensorboardX import SummaryWriter 
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
+writer = SummaryWriter('runs/exp-1')
 
 class DQN(nn.Module):
     '''
@@ -50,7 +52,7 @@ class AgentDQN(Agent):
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
 
         if args.test_dqn:
-            self.load('dqn')
+            self.load('dqn_plot')
 
         # discounted reward
         self.GAMMA = 0.99
@@ -103,14 +105,18 @@ class AgentDQN(Agent):
         # Implement epsilon-greedy to decide whether you want to randomly select
         # an action or not.
         # HINT: You may need to use and self.steps
-        sample = random.random()
-        if sample > self.eps:
-            with torch.no_grad():
-                action = self.online_net(state.cuda()).max(1)[1].item() #int
-                return action
-        else:
-            return random.randrange(self.num_actions)
-            
+        if not test:
+            sample = random.random()
+            if sample > self.eps:
+                with torch.no_grad():
+                    action = self.online_net(state.cuda()).max(1)[1].item() #int
+                    return action
+            else:
+                return random.randrange(self.num_actions)
+        with torch.no_grad():
+            state = torch.from_numpy(state).permute(2,0,1).unsqueeze(0)
+            action = self.online_net(state.cuda()).max(1)[1].item() #int
+            return action  
     def update(self):
         # TODO:
         # step 1: Sample some stored experiences as training examples.
@@ -163,6 +169,7 @@ class AgentDQN(Agent):
         return loss.item()
 
     def train(self):
+        global writer
         episodes_done_num = 0 # passed episodes
         total_reward = 0 # compute average reward
         loss = 0
@@ -201,7 +208,7 @@ class AgentDQN(Agent):
 
                 # save the model
                 if self.steps % self.save_freq == 0:
-                    self.save('dqn')
+                    self.save('dqn_plot')
 
                 self.steps += 1
                 
@@ -211,9 +218,10 @@ class AgentDQN(Agent):
             if episodes_done_num % self.display_freq == 0:
                 print('Episode: %d | Steps: %d/%d | Avg reward: %f | loss: %f '%
                         (episodes_done_num, self.steps, self.num_timesteps, total_reward / self.display_freq, loss))
+                writer.add_scalar('avg_reward', total_reward / self.display_freq, episodes_done_num)
                 total_reward = 0
 
             episodes_done_num += 1
             if self.steps > self.num_timesteps:
                 break
-        self.save('dqn')
+        self.save('dqn_plot')
