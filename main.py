@@ -40,8 +40,9 @@ def run(args):
         env_name = args.env_name or 'MsPacmanNoFrameskip-v0'
         env = Environment(env_name, args, atari_wrapper=True)
         from agent_dir.agent_dqn import AgentDQN
-        agent = AgentDQN(env, args)
-        agent.train()
+        for i in range(4):
+            agent = AgentDQN(env, args)
+            agent.train(i)
 
     if args.test_pg:
         env = Environment('LunarLander-v2', args, test=True)

@@ -28,7 +28,7 @@ class AgentPG(Agent):
                                action_num= self.env.action_space.n,
                                hidden_dim=64)
         if args.test_pg:
-            self.load('pg_plot.cpt')
+            self.load('pg.cpt')
 
         # discounted reward
         self.gamma = 0.99
@@ -42,9 +42,7 @@ class AgentPG(Agent):
 
         # saved rewards and actions
         self.rewards, self.saved_actions = [], []
-        ###
         self.logprobs = []
-        #self.state_values = []
 
     def save(self, save_path):
         print('save model to', save_path)
@@ -67,7 +65,7 @@ class AgentPG(Agent):
         state = torch.from_numpy(state).float()
         action_distribution = Categorical(self.model(state))
         action = action_distribution.sample()
-        
+
         self.logprobs.append(action_distribution.log_prob(action))
         return action.item()
 
@@ -83,7 +81,7 @@ class AgentPG(Agent):
         # TODO:
         # compute PG loss
         # loss = sum(-R_i * log(action_prob))
-        # normalizing the rewards:
+        # normalize reward:
         rewards_list = torch.tensor(rewards_list)
         rewards_list = (rewards_list - rewards_list.mean()) / (rewards_list.std())
         
@@ -122,5 +120,5 @@ class AgentPG(Agent):
                        (epoch, self.num_episodes, avg_reward))
 
             if avg_reward > 60: # to pass baseline, avg. reward > 50 is enough.
-                self.save('pg_plot.cpt')
+                self.save('pg.cpt')
                 break
