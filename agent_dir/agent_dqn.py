@@ -52,7 +52,7 @@ class AgentDQN(Agent):
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
 
         if args.test_dqn:
-            self.load('dqn_plot')
+            self.load('dqn')
 
         # discounted reward
         self.GAMMA = 0.99
@@ -208,7 +208,7 @@ class AgentDQN(Agent):
 
                 # save the model
                 if self.steps % self.save_freq == 0:
-                    self.save('dqn_plot')
+                    self.save('dq')
 
                 self.steps += 1
                 
@@ -224,4 +224,4 @@ class AgentDQN(Agent):
             episodes_done_num += 1
             if self.steps > self.num_timesteps:
                 break
-        self.save('dqn_plot')
+        self.save('dqn')
