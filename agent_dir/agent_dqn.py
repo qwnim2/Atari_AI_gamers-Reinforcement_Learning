@@ -178,8 +178,9 @@ class AgentDQN(Agent):
         return loss.item()
 
     def train(self, num):
+        num += 1
         from tensorboardX import SummaryWriter 
-        writer = SummaryWriter(f'dqn vs ddqn/reward{num}')
+        writer = SummaryWriter(f'DDQN/reward{num}')
 
         episodes_done_num = 0 # passed episodes
         total_reward = 0 # compute average reward

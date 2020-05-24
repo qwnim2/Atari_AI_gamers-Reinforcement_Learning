@@ -40,7 +40,7 @@ def run(args):
         env_name = args.env_name or 'MsPacmanNoFrameskip-v0'
         env = Environment(env_name, args, atari_wrapper=True)
         from agent_dir.agent_dqn import AgentDQN
-        for i in range(4):
+        for i in range(2):
             agent = AgentDQN(env, args)
             agent.train(i)
 
