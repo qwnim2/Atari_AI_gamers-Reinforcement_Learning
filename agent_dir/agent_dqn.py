@@ -37,21 +37,61 @@ class DQN(nn.Module):
         q = self.head(x)
         return q
 
+class DUELING_DQN(nn.Module):
+    '''
+    This architecture is the one from OpenAI Baseline, with small modification.
+    '''
+    def __init__(self, channels, num_actions):
+        super(DUELING_DQN, self).__init__()
+        self.conv1 = nn.Conv2d(channels, 32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+
+        self.fc_adv = nn.Linear(3136, 512)
+        self.fc_val = nn.Linear(3136, 512)
+
+        self.head_adv = nn.Linear(512, num_actions)
+        self.head_val = nn.Linear(512, 1)
+        self.relu = nn.ReLU()
+        self.lrelu = nn.LeakyReLU(0.01)
+
+
+    def forward(self, x):
+        x = self.relu(self.conv1(x))
+        x = self.relu(self.conv2(x))
+        x = self.relu(self.conv3(x))
+        x = x.view(x.size(0), -1)
+
+        adv = self.lrelu(self.fc_adv(x))
+        val = self.lrelu(self.fc_val(x))
+
+        adv = self.head_adv(adv)
+        val = self.head_val(val).expand(x.size(0), 9)
+        #q = self.head(x)
+        q = val + adv - adv.mean(1).unsqueeze(1).expand(x.size(0), 9)
+        return q
 
 class AgentDQN(Agent):
-    def __init__(self, env, args):
+    def __init__(self, env, args, num):
         self.env = env
         self.input_channels = 4
         self.num_actions = self.env.action_space.n      #num_actions = 9
-
+        self.num = num
         # build target, online network
-        self.target_net = DQN(self.input_channels, self.num_actions)
+        if self.num == 1:
+            self.target_net = DUELING_DQN(self.input_channels, self.num_actions)
+        elif self.num == 2:
+            self.target_net = DQN(self.input_channels, self.num_actions)
         self.target_net = self.target_net.cuda() if use_cuda else self.target_net
-        self.online_net = DQN(self.input_channels, self.num_actions)
+
+        if self.num == 1:
+            self.online_net = DUELING_DQN(self.input_channels, self.num_actions)
+        elif self.num == 2:
+            self.online_net = DQN(self.input_channels, self.num_actions)
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
 
         if args.test_dqn:
-            self.load('ddqn')
+            self.load('duel_dqn')
 
         # discounted reward
         self.GAMMA = 0.99
@@ -117,7 +157,7 @@ class AgentDQN(Agent):
             action = self.online_net(state.cuda()).max(1)[1].item() #int
             return action
 
-    def update(self, num):
+    def update(self):
         # TODO:
         # step 1: Sample some stored experiences as training examples.
         # step 2: Compute Q(s_t, a) with your model.
@@ -154,14 +194,14 @@ class AgentDQN(Agent):
         next_state_values = torch.zeros(self.batch_size, device=device)
         target_next_state_values = torch.zeros(self.batch_size, device=device)
         online_next_state_values = torch.zeros(self.batch_size, device=device)
-        if num == 1:
-            target_next_state_values = self.target_net(non_final_next_states.cuda())
-            online_next_state_values = self.online_net(non_final_next_states.cuda())
-            next_state_values[non_final_mask] = target_next_state_values.gather(1, 
-                            online_next_state_values.max(1)[1].unsqueeze(1)).squeeze(1).detach()
+        # if num == 1:
+        #     target_next_state_values = self.target_net(non_final_next_states.cuda())
+        #     online_next_state_values = self.online_net(non_final_next_states.cuda())                                    ##for DDQN
+        #     next_state_values[non_final_mask] = target_next_state_values.gather(1, 
+        #                     online_next_state_values.max(1)[1].unsqueeze(1)).squeeze(1).detach()
             
-        elif num == 2:
-            next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
+        # elif num == 2:
+        next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
 
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
@@ -178,10 +218,9 @@ class AgentDQN(Agent):
 
         return loss.item()
 
-    def train(self, num):
-        num += 1
+    def train(self):
         from tensorboardX import SummaryWriter 
-        writer = SummaryWriter(f'DDQN/reward{num}')
+        writer = SummaryWriter(f'Dueling_DQN/reward{self.num}')
 
         episodes_done_num = 0 # passed episodes
         total_reward = 0 # compute average reward
@@ -213,18 +252,18 @@ class AgentDQN(Agent):
 
                 # Perform one step of the optimization
                 if self.steps > self.learning_start and self.steps % self.train_freq == 0:
-                    if num == 1:
-                        loss = self.update(1)
-                    elif num == 2:
-                        loss = self.update(2)
-
+                    # if num == 1:
+                    #     loss = self.update(1)
+                    # elif num == 2:
+                    #     loss = self.update(2)
+                    loss = self.update()
                 # TODO: update target network
                 if self.steps > self.learning_start and self.steps % self.target_update_freq == 0:
                     self.target_net.load_state_dict(self.online_net.state_dict())
 
                 # save the model
                 if self.steps % self.save_freq == 0:
-                    self.save('ddqn')
+                    self.save('duel_dqn')
 
                 self.steps += 1
               
@@ -235,11 +274,11 @@ class AgentDQN(Agent):
                 print('Episode: %d | Steps: %d/%d | Avg reward: %f | loss: %f '%
                         (episodes_done_num, self.steps, self.num_timesteps, total_reward / self.display_freq, loss))
                 if episodes_done_num % 100 == 0:
-                    writer.add_scalar('avg_reward', total_reward / self.display_freq, episodes_done_num)
+                    writer.add_scalar('Dueling-DQN', total_reward / self.display_freq, episodes_done_num)
                     writer.close()
                 total_reward = 0
 
             episodes_done_num += 1
             if self.steps > self.num_timesteps:
                 break
-        self.save('ddqn')
+        self.save('duel_dqn')
