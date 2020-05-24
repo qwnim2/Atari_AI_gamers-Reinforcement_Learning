@@ -73,11 +73,12 @@ class DQN(nn.Module):
 #         return q
 
 class AgentDQN(Agent):
-    def __init__(self, env, args, num):
+    def __init__(self, env, args):#, num):
         self.env = env
         self.input_channels = 4
         self.num_actions = self.env.action_space.n      #num_actions = 9
-        self.num = num
+        
+        # self.num = num
         # build target, online network
         # if self.num == 1:
         #     self.target_net = DUELING_DQN(self.input_channels, self.num_actions)
