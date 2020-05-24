@@ -117,7 +117,7 @@ class AgentDQN(Agent):
             action = self.online_net(state.cuda()).max(1)[1].item() #int
             return action
 
-    def update(self):
+    def update(self, num):
         # TODO:
         # step 1: Sample some stored experiences as training examples.
         # step 2: Compute Q(s_t, a) with your model.
@@ -153,7 +153,15 @@ class AgentDQN(Agent):
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(self.batch_size, device=device)
-        next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
+        online_next_state_values = torch.zeros(self.batch_size, device=device)
+        if num == 1:
+            next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
+        elif num == 2:
+            next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda())
+            online_next_state_values[non_final_mask] = self.online_net(non_final_next_states.cuda())
+            next_state_values = next_state_values[non_final_mask].gather(1,
+                                online_next_state_values.max(1)[1].unsqueeze(1)).squeeze(1).detach()
+
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
 
@@ -171,14 +179,8 @@ class AgentDQN(Agent):
 
     def train(self, num):
         from tensorboardX import SummaryWriter 
-        writer = SummaryWriter(f'gam/reward{num}')
+        writer = SummaryWriter(f'dqn vs ddqn/reward{num}')
 
-        if num == 1:
-            self.GAMMA = 0.999999
-        elif num == 2:
-            self.GAMMA = 0.999
-        elif num ==3:
-            self.GAMMA = 0.95
         episodes_done_num = 0 # passed episodes
         total_reward = 0 # compute average reward
         loss = 0
@@ -209,7 +211,10 @@ class AgentDQN(Agent):
 
                 # Perform one step of the optimization
                 if self.steps > self.learning_start and self.steps % self.train_freq == 0:
-                    loss = self.update()
+                    if num == 1:
+                        loss = self.update(1)
+                    elif num == 2:
+                        loss = self.update(2)
 
                 # TODO: update target network
                 if self.steps > self.learning_start and self.steps % self.target_update_freq == 0:
