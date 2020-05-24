@@ -156,8 +156,8 @@ class AgentDQN(Agent):
         if num == 1:
             next_state_values = self.target_net(non_final_next_states.cuda())
             online_next_state_values = self.online_net(non_final_next_states.cuda())
-            next_state_values[non_final_mask] = next_state_values[non_final_mask].gather(1,
-                                online_next_state_values.max(1)[0].unsqueeze(1)).squeeze(1).detach()
+            next_state_values[non_final_mask] = next_state_values[non_final_mask].gather(1, 
+                            online_next_state_values[non_final_mask].max(1)[1].unsqueeze(1)).squeeze(1).detach()
             
         elif num == 2:
             next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
