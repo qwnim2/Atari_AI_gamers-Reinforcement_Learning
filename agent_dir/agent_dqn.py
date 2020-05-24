@@ -138,7 +138,7 @@ class AgentDQN(Agent):
         print(non_final_mask)
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
-                                                
+        print(non_final_next_states)             
         state_batch = torch.cat(mini_batch.state).cuda()
         action_batch = torch.cat((mini_batch.action)).cuda()
         reward_batch = torch.cat(mini_batch.reward).cuda()
