@@ -135,6 +135,7 @@ class AgentDQN(Agent):
         
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                                           mini_batch.next_state)), device=device, dtype=torch.bool)
+        print(non_final_mask)
         non_final_next_states = torch.cat([s for s in mini_batch.next_state
                                                 if s is not None])
                                                 
@@ -155,12 +156,13 @@ class AgentDQN(Agent):
         next_state_values = torch.zeros(self.batch_size, device=device)
         online_next_state_values = torch.zeros(self.batch_size, device=device)
         if num == 1:
-            next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
-        elif num == 2:
             next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda())
             online_next_state_values[non_final_mask] = self.online_net(non_final_next_states.cuda())
             next_state_values = next_state_values[non_final_mask].gather(1,
                                 online_next_state_values.max(1)[1].unsqueeze(1)).squeeze(1).detach()
+            
+        elif num == 2:
+            next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
 
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
