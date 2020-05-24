@@ -51,7 +51,7 @@ class AgentDQN(Agent):
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
 
         if args.test_dqn:
-            self.load('dqn_four')
+            self.load('ddqn')
 
         # discounted reward
         self.GAMMA = 0.99
@@ -171,7 +171,7 @@ class AgentDQN(Agent):
 
     def train(self, num):
         from tensorboardX import SummaryWriter 
-        writer = SummaryWriter(f'run_gamma/reward_{num}')
+        writer = SummaryWriter(f'gam/reward{num}')
 
         if num == 1:
             self.GAMMA = 0.999999
@@ -217,7 +217,7 @@ class AgentDQN(Agent):
 
                 # save the model
                 if self.steps % self.save_freq == 0:
-                    self.save('dqn_four')
+                    self.save('ddqn')
 
                 self.steps += 1
               
@@ -227,11 +227,12 @@ class AgentDQN(Agent):
             if episodes_done_num % self.display_freq == 0:
                 print('Episode: %d | Steps: %d/%d | Avg reward: %f | loss: %f '%
                         (episodes_done_num, self.steps, self.num_timesteps, total_reward / self.display_freq, loss))
-                if self.steps % 10000 ==0:
+                if episodes_done_num % 100 == 0:
                     writer.add_scalar('avg_reward', total_reward / self.display_freq, episodes_done_num)
+                    writer.close()
                 total_reward = 0
 
             episodes_done_num += 1
             if self.steps > self.num_timesteps:
                 break
-        self.save('dqn_four')
+        self.save('ddqn')
