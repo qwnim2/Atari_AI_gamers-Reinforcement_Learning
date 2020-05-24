@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from agent_dir.agent import Agent
 from environment import Environment
 from torch.distributions import Categorical
-from tensorboardX import SummaryWriter
-writer = SummaryWriter('run_pg/exp-1')
+# from tensorboardX import SummaryWriter
+# writer = SummaryWriter('run_pg/exp-1')
 
 class PolicyNet(nn.Module):
     def __init__(self, state_dim, action_num, hidden_dim):
@@ -117,7 +117,7 @@ class AgentPG(Agent):
             avg_reward = last_reward if not avg_reward else avg_reward * 0.9 + last_reward * 0.1
 
             if epoch % self.display_freq == 0:
-                writer.add_scalar('Reward', avg_reward, epoch)
+                # writer.add_scalar('Reward', avg_reward, epoch)
                 print('Epochs: %d/%d | Avg reward: %f '%
                        (epoch, self.num_episodes, avg_reward))
 

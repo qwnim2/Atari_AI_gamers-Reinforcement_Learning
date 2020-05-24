@@ -37,39 +37,40 @@ class DQN(nn.Module):
         q = self.head(x)
         return q
 
-class DUELING_DQN(nn.Module):
-    '''
-    This architecture is the one from OpenAI Baseline, with small modification.
-    '''
-    def __init__(self, channels, num_actions):
-        super(DUELING_DQN, self).__init__()
-        self.conv1 = nn.Conv2d(channels, 32, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+# Dueling-dqn class
+# class DUELING_DQN(nn.Module):
+#     '''
+#     This architecture is the one from OpenAI Baseline, with small modification.
+#     '''
+#     def __init__(self, channels, num_actions):
+#         super(DUELING_DQN, self).__init__()
+#         self.conv1 = nn.Conv2d(channels, 32, kernel_size=8, stride=4)
+#         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+#         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
 
-        self.fc_adv = nn.Linear(3136, 512)
-        self.fc_val = nn.Linear(3136, 512)
+#         self.fc_adv = nn.Linear(3136, 512)
+#         self.fc_val = nn.Linear(3136, 512)
 
-        self.head_adv = nn.Linear(512, num_actions)
-        self.head_val = nn.Linear(512, 1)
-        self.relu = nn.ReLU()
-        self.lrelu = nn.LeakyReLU(0.01)
+#         self.head_adv = nn.Linear(512, num_actions)
+#         self.head_val = nn.Linear(512, 1)
+#         self.relu = nn.ReLU()
+#         self.lrelu = nn.LeakyReLU(0.01)
 
 
-    def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        x = self.relu(self.conv3(x))
-        x = x.view(x.size(0), -1)
+#     def forward(self, x):
+#         x = self.relu(self.conv1(x))
+#         x = self.relu(self.conv2(x))
+#         x = self.relu(self.conv3(x))
+#         x = x.view(x.size(0), -1)
 
-        adv = self.lrelu(self.fc_adv(x))
-        val = self.lrelu(self.fc_val(x))
+#         adv = self.lrelu(self.fc_adv(x))
+#         val = self.lrelu(self.fc_val(x))
 
-        adv = self.head_adv(adv)
-        val = self.head_val(val).expand(x.size(0), 9)
-        #q = self.head(x)
-        q = val + adv - adv.mean(1).unsqueeze(1).expand(x.size(0), 9)
-        return q
+#         adv = self.head_adv(adv)
+#         val = self.head_val(val).expand(x.size(0), 9)
+#         #q = self.head(x)
+#         q = val + adv - adv.mean(1).unsqueeze(1).expand(x.size(0), 9)
+#         return q
 
 class AgentDQN(Agent):
     def __init__(self, env, args, num):
@@ -78,20 +79,20 @@ class AgentDQN(Agent):
         self.num_actions = self.env.action_space.n      #num_actions = 9
         self.num = num
         # build target, online network
-        if self.num == 1:
-            self.target_net = DUELING_DQN(self.input_channels, self.num_actions)
-        elif self.num == 2:
-            self.target_net = DQN(self.input_channels, self.num_actions)
+        # if self.num == 1:
+        #     self.target_net = DUELING_DQN(self.input_channels, self.num_actions)
+        # elif self.num == 2:                                                       #for dueling-dqn
+        self.target_net = DQN(self.input_channels, self.num_actions)
         self.target_net = self.target_net.cuda() if use_cuda else self.target_net
 
-        if self.num == 1:
-            self.online_net = DUELING_DQN(self.input_channels, self.num_actions)
-        elif self.num == 2:
-            self.online_net = DQN(self.input_channels, self.num_actions)
+        # if self.num == 1:
+        #     self.online_net = DUELING_DQN(self.input_channels, self.num_actions)  #for dueling-dqn
+        # elif self.num == 2:
+        self.online_net = DQN(self.input_channels, self.num_actions)
         self.online_net = self.online_net.cuda() if use_cuda else self.online_net
 
         if args.test_dqn:
-            self.load('duel_dqn')
+            self.load('dqn')
 
         # discounted reward
         self.GAMMA = 0.99
@@ -192,15 +193,17 @@ class AgentDQN(Agent):
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(self.batch_size, device=device)
-        target_next_state_values = torch.zeros(self.batch_size, device=device)
-        online_next_state_values = torch.zeros(self.batch_size, device=device)
+        
+        # Double-DQN
+        # target_next_state_values = torch.zeros(self.batch_size, device=device)
+        # online_next_state_values = torch.zeros(self.batch_size, device=device)
         # if num == 1:
         #     target_next_state_values = self.target_net(non_final_next_states.cuda())
         #     online_next_state_values = self.online_net(non_final_next_states.cuda())                                    ##for DDQN
         #     next_state_values[non_final_mask] = target_next_state_values.gather(1, 
         #                     online_next_state_values.max(1)[1].unsqueeze(1)).squeeze(1).detach()
-            
         # elif num == 2:
+
         next_state_values[non_final_mask] = self.target_net(non_final_next_states.cuda()).max(1)[0].detach()
 
         # Compute the expected Q values
@@ -263,7 +266,7 @@ class AgentDQN(Agent):
 
                 # save the model
                 if self.steps % self.save_freq == 0:
-                    self.save('duel_dqn')
+                    self.save('dqn')
 
                 self.steps += 1
               
@@ -281,4 +284,4 @@ class AgentDQN(Agent):
             episodes_done_num += 1
             if self.steps > self.num_timesteps:
                 break
-        self.save('duel_dqn')
+        self.save('dqn')
