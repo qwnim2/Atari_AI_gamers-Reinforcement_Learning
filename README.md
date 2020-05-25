@@ -24,6 +24,20 @@ testing DQN:
 If you want to see your agent playing the game,
 * `$ python3 test.py --test_[pg|dqn] --do_render`
 
+If you want to check learning curve of PG, DQN, Advanced DQN, uncomment the lines about tensorboardX writer,
+e.g. some code in agent_pg.py 
+```
+# from tensorboardX import SummaryWriter
+# writer = SummaryWriter('run_pg/exp-1')
+# writer.add_scalar('Reward', avg_reward, epoch)
+# writer.close()
+```
+And then watch the plot made in tensorboard
+* `$ tensorboard --lodgir [runs_dir]`
+Observe it on: 
+```
+localhost:6006
+```
 
 ## Code structure
 
