@@ -1,4 +1,4 @@
-# Reinforcement Learning
+# Reinforcement Learning (Play Atari games)
 Please don't revise test.py, environment.py,  atari_wrapper.py,  agent_dir/agent.py
 
 ## Installation
